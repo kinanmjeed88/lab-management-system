@@ -1,0 +1,2542 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة المختبرات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #3f37c9;
+            --danger: #f72585;
+            --danger-dark: #e01b76;
+            --success: #4cc9f0;
+            --success-dark: #3ab7de;
+            --warning: #f8961e;
+            --warning-dark: #e68715;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --border-color: #e0e0e0;
+            --row-even: #f8f9fa;
+            --row-odd: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Tajawal', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        #current-date {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .menu button {
+            background: white;
+            border: 2px solid var(--primary);
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            min-width: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        .menu button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .menu button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .menu button i {
+            font-size: 18px;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            width: 100%;
+            overflow-x: auto;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section h2 i {
+            font-size: 24px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .modern-table th,
+        .modern-table td {
+            padding: 10px 12px;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+            border-left: 1px solid var(--border-color);
+        }
+
+        .modern-table th {
+            background: #f5f7ff;
+            color: var(--primary);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            border-bottom: 2px solid var(--primary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .modern-table th.sortable::after {
+            content: '\00A0\25B2\25BC';
+            font-size: 0.8em;
+            color: var(--gray);
+        }
+
+        .modern-table th.sorted-asc::after {
+            content: '\00A0\25B2';
+            color: var(--primary-dark);
+        }
+
+        .modern-table th.sorted-desc::after {
+            content: '\00A0\25BC';
+            color: var(--primary-dark);
+        }
+
+        .modern-table tr:nth-child(even) {
+            background-color: var(--row-even);
+        }
+
+        .modern-table tr:nth-child(odd) {
+            background-color: var(--row-odd);
+        }
+
+        .modern-table tr:hover {
+            background-color: #e6f0ff;
+        }
+
+        .serial-column {
+            width: 50px;
+            text-align: center;
+            color: var(--gray);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-dark);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .status-active {
+            background-color: rgba(76, 201, 240, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(76, 201, 240, 0.3);
+        }
+
+        .status-inactive {
+            background-color: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(247, 37, 133, 0.3);
+        }
+
+        .status-maintenance {
+            background-color: rgba(248, 150, 30, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(248, 150, 30, 0.3);
+        }
+
+        #lab-details-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+            backdrop-filter: blur(3px);
+        }
+
+        #lab-details-modal {
+            background-color: white;
+            border-radius: 10px;
+            width: 95%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: none;
+            animation: modalFadeIn 0.3s ease-out;
+            padding: 15px;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #lab-details-modal-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            text-align: center;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        #lab-details-modal-body {
+            padding: 0;
+        }
+
+        #lab-details-modal-footer {
+            padding: 15px;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .lab-details-card {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .detail-item {
+            margin-bottom: 10px;
+        }
+
+        .detail-item label {
+            display: block;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 3px;
+            font-size: 13px;
+        }
+
+        .detail-item input[type="text"],
+        .detail-item input[type="number"],
+        .detail-item input[type="tel"],
+        .detail-item select,
+        .detail-item textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .detail-item .status-badge {
+            display: block;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .export-btn {
+            background: #28a745;
+        }
+
+        .export-btn:hover {
+            background: #218838;
+        }
+
+        .export-image-btn {
+            background: #d35400;
+        }
+
+        .export-image-btn:hover {
+            background: #e67e22;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 16px;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .no-data i {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: #e0e0e0;
+        }
+
+        .loading-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.7);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 2000;
+            font-size: 18px;
+        }
+
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4361ee;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .menu button {
+                min-width: calc(50% - 10px);
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .modern-table {
+                font-size: 13px;
+            }
+
+            .modern-table th,
+            .modern-table td {
+                padding: 8px 10px;
+            }
+
+            .modal-content {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .lab-details-card {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .menu button {
+                min-width: 100%;
+            }
+
+            .section {
+                padding: 15px;
+            }
+
+            .modern-table {
+                font-size: 12px;
+            }
+
+            .modern-table th,
+            .modern-table td {
+                padding: 6px 8px;
+            }
+
+            .export-buttons {
+                flex-direction: column;
+            }
+
+            .export-buttons button {
+                width: 100%;
+            }
+        }
+
+        .a4-export-container {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 210mm;
+            height: 297mm;
+            padding: 15mm;
+            background: white;
+            box-sizing: border-box;
+            font-family: 'Tajawal', Arial, sans-serif;
+            direction: rtl;
+        }
+
+        .a4-header {
+            text-align: center;
+            margin-bottom: 10mm;
+            border-bottom: 2px solid #4361ee;
+            padding-bottom: 5mm;
+        }
+
+        .a4-header h2 {
+            color: #4361ee;
+            font-size: 24pt;
+            margin: 0;
+        }
+
+        .a4-header .subtitle {
+            color: #666;
+            font-size: 12pt;
+        }
+
+        .a4-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 5mm 0;
+            font-size: 10pt;
+        }
+
+        .a4-table th {
+            background-color: #f5f7ff;
+            color: #4361ee;
+            padding: 3mm;
+            text-align: right;
+            border-bottom: 1px solid #4361ee;
+        }
+
+        .a4-table td {
+            padding: 2mm 3mm;
+            text-align: right;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .a4-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .a4-table tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        .a4-footer {
+            text-align: left;
+            margin-top: 10mm;
+            padding-top: 5mm;
+            border-top: 1px solid #eee;
+            font-size: 10pt;
+            color: #666;
+        }
+
+        .a4-export-container h3 {
+            color: var(--primary);
+            margin-top: 10mm;
+            margin-bottom: 5mm;
+        }
+
+        .a4-export-container p {
+            margin-bottom: 3mm;
+            font-size: 11pt;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--success);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 1001;
+            opacity: 0;
+            animation: fadeNotification 3s ease-in-out forwards;
+        }
+        .notification.success {
+            background-color: var(--success);
+        }
+        .notification.danger {
+            background-color: var(--danger);
+        }
+        @keyframes fadeNotification {
+            0% { opacity: 0; top: 0; }
+            20% { opacity: 1; top: 20px; }
+            80% { opacity: 1; top: 20px; }
+            100% { opacity: 0; top: 0; }
+        }
+
+        .stats-container .stat-card {
+            border: 1px solid #eee;
+        }
+
+        .device-type-stats h3 {
+            color: var(--primary);
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        #device-type-stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        #device-type-stats-table th,
+        #device-type-stats-table td {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        #device-type-stats-table th {
+            background-color: #f5f7ff;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .material-cost-stats {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .material-cost-stats h4 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        .material-cost-stats p {
+            margin-bottom: 5px;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+
+        .pagination-button {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: white;
+            color: var(--primary);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .pagination-button:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .pagination-button.active {
+            background-color: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+
+        .pagination-button:disabled {
+            background-color: #eee;
+            color: #aaa;
+            border-color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle::after {
+            display: inline-block;
+            margin-left: 0.255em;
+            vertical-align: 0.255em;
+            content: "";
+            border-top: 0.3em solid;
+            border-right: 0.3em solid transparent;
+            border-bottom: 0;
+            border-left: 0.3em solid transparent;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            z-index: 1000;
+            display: none;
+            min-width: 10rem;
+            padding: 0.5rem 0;
+            margin: 0.125rem 0 0;
+            font-size: 1rem;
+            color: #212529;
+            text-align: right;
+            list-style: none;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 0.25rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
+        }
+
+        .dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 0.25rem 1rem;
+            clear: both;
+            font-weight: 400;
+            color: #212529;
+            text-align: inherit;
+            white-space: nowrap;
+            background-color: transparent;
+            border: 0;
+            text-decoration: none;
+        }
+
+        .dropdown-item:hover,
+        .dropdown-item:focus {
+            color: #1e2125;
+            background-color: #e9ecef;
+        }
+
+        .dropdown-toggle.show + .dropdown-menu {
+            display: block;
+        }
+
+        #labs-table-filter-container {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #labs-table-filter-container label {
+            font-weight: bold;
+        }
+
+        #labs-table-filter-container select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+        }
+
+        #saved-device-types-container {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        #saved-device-types-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .saved-device-type-item {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 5px;
+            background-color: var(--light);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .saved-device-type-item:hover {
+            background-color: #eee;
+        }
+
+        .backup-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .backup-btn {
+            background: #6c757d;
+        }
+
+        .backup-btn:hover {
+            background: #5a6268;
+        }
+
+        .restore-btn {
+            background: #17a2b8;
+        }
+
+        .restore-btn:hover {
+            background: #138496;
+        }
+
+        #backup-file-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-flask"></i> نظام إدارة المختبرات</h1>
+            <p id="current-date"></p>
+        </header>
+
+        <div class="menu">
+            <button class="active" id="view-btn"><i class="fas fa-list"></i> عرض المختبرات</button>
+            <button id="add-btn"><i class="fas fa-plus"></i> إضافة مختبر</button>
+            <button id="search-btn"><i class="fas fa-search"></i> بحث متقدم</button>
+            <button id="stats-btn"><i class="fas fa-chart-pie"></i> الإحصاءات</button>
+        </div>
+
+        <section id="view-section" class="section active">
+            <h2><i class="fas fa-list"></i> قائمة المختبرات</h2>
+            <div style="overflow-x: auto;">
+                <table class="modern-table" id="labs-table-container">
+                    <thead>
+                        <tr>
+                            <th class="serial-column">#</th>
+                            <th data-sort="name" class="sortable">اسم المختبر</th>
+                            <th data-sort="governorate" class="sortable">المحافظة</th>
+                            <th data-sort="device" class="sortable">نوع الجهاز</th>
+                            <th data-sort="count" class="sortable">العدد</th>
+                            <th data-sort="phone" class="sortable">رقم الهاتف</th>
+                            <th data-sort="materialCost" class="sortable">سعر المواد التشغيلية</th>
+                            <th data-sort="testsCount" class="sortable">عدد الفحوصات</th>
+                            <th data-sort="status" class="sortable">الحالة</th>
+                            <th data-sort="creationDate" class="sortable">تاريخ الإنشاء</th>
+                            <th>ملاحظات</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="labs-table">
+                    </tbody>
+                </table>
+                <div id="no-labs-message" class="no-data" style="display: none;">
+                    <i class="fas fa-flask"></i>
+                    <p>لا توجد مختبرات مسجلة حالياً</p>
+                </div>
+            </div>
+            <div id="pagination-controls" class="pagination-container">
+            </div>
+            <div class="export-buttons">
+                <button class="btn export-btn" id="export-btn"><i class="fas fa-file-pdf"></i> تصدير إلى PDF</button>
+            </div>
+            <div class="backup-buttons">
+                <button class="btn backup-btn" id="backup-btn"><i class="fas fa-download"></i> حفظ نسخة احتياطية</button>
+                <button class="btn restore-btn" id="restore-btn"><i class="fas fa-upload"></i> استعادة نسخة احتياطية</button>
+                <input type="file" id="backup-file-input" accept=".json">
+            </div>
+        </section>
+
+        <section id="add-section" class="section">
+            <h2><i class="fas fa-plus"></i> إضافة مختبر جديد</h2>
+            <form id="add-form">
+                <div class="form-group">
+                    <label for="lab-name">اسم المختبر</label>
+                    <input type="text" id="lab-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="lab-governorate">المحافظة</label>
+                    <select id="lab-governorate">
+                        <option value="">اختر المحافظة</option>
+                        <option value="بغداد">بغداد</option>
+                        <option value="البصرة">البصرة</option>
+                        <option value="نينوى">نينوى</option>
+                        <option value="أربيل">أربيل</option>
+                        <option value="الأنبار">الأنبار</option>
+                        <option value="كربلاء">كربلاء</option>
+                        <option value="بابل">بابل</option>
+                        <option value="النجف">النجف</option>
+                        <option value="صلاح الدين">صلاح الدين</option>
+                        <option value="ذي قار">ذي قار</option>
+                        <option value="دهوك">دهوك</option>
+                        <option value="كركوك">كركوك</option>
+                        <option value="ديالى">ديالى</option>
+                        <option value="ميسان">ميسان</option>
+                        <option value="واسط">واسط</option>
+                        <option value="السليمانية">السليمانية</option>
+                        <option value="القادسية">القادسية</option>
+                        <option value="المثنى">المثنى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="device-type">نوع الجهاز</label>
+                    <select id="device-type">
+                        <option value="">اختر نوع الجهاز</option>
+                        <option value="جهاز تحليل الدم">جهاز تحليل الدم</option>
+                        <option value="جهاز تحليل البول">جهاز تحليل البول</option>
+                        <option value="جهاز تحليل الغازات في الدم">جهاز تحليل الغازات في الدم</option>
+                        <option value="جهاز الأشعة السينية (X-Ray)">جهاز الأشعة السينية (X-Ray)</option>
+                        <option value="جهاز التعقيم">جهاز التعقيم</option>
+                        <option value="جهاز التنفس الاصطناعي">جهاز التنفس الاصطناعي</option>
+                        <option value="جهاز التصوير بالرنين المغناطيسي (MRI)">جهاز التصوير بالرنين المغناطيسي (MRI)</option>
+                        <option value="جهاز التصوير المقطعي المحوسب (CT)">جهاز التصوير المقطعي المحوسب (CT)</option>
+                        <option value="جهاز الطرد المركزي">جهاز الطرد المركزي</option>
+                        <option value="جهاز قياس السكر">جهاز قياس السكر</option>
+                        <option value="جهاز قياس النبض والأكسجين">جهاز قياس النبض والأكسجين</option>
+                        <option value="جهاز قياس ضغط الدم">جهاز قياس ضغط الدم</option>
+                        <option value="الحاضنة">الحاضنة</option>
+                        <option value="المجهر الضوئي">المجهر الضوئي</option>
+                        <option value="تجميد العينات">جهاز تجميد العينات</option>
+                        <option value="فوجي فيلم">فوجي فيلم</option>
+                        <option value="CVC">CVC</option>
+                        <option value="أخرى (كتابة)">أخرى (كتابة)</option>
+                    </select>
+                    <input type="text" id="device-type-other" placeholder="أدخل نوع الجهاز" style="display: none;">
+                </div>
+                <div class="form-group">
+                    <label for="device-count">عدد الأجهزة</label>
+                    <input type="number" id="device-count" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="lab-phone">رقم الهاتف</label>
+                    <input type="tel" id="lab-phone" pattern="0\d{9}">
+                </div>
+                <div class="form-group">
+                    <label for="material-cost">سعر المواد التشغيلية</label>
+                    <input type="number" id="material-cost" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="tests-count">عدد الفحوصات</label>
+                    <input type="number" id="tests-count" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="lab-status">حالة المختبر</label>
+                    <select id="lab-status">
+                        <option value="active" selected>نشط</option>
+                        <option value="inactive">غير نشط</option>
+                        <option value="maintenance">قيد الصيانة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="creation-date">تاريخ الإنشاء</label>
+                    <input type="date" id="creation-date">
+                </div>
+                <div class="form-group">
+                    <label for="lab-notes">ملاحظات</label>
+                    <textarea id="lab-notes" rows="3"></textarea>
+                </div>
+                <div id="saved-device-types-container" style="display: none;">
+                    <label>أنواع الأجهزة المحفوظة:</label>
+                    <div id="saved-device-types-list"></div>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ البيانات</button>
+                <button type="button" class="btn btn-secondary" id="cancel-add"><i class="fas fa-times"></i> إلغاء</button>
+            </form>
+        </section>
+
+        <section id="search-section" class="section">
+            <h2><i class="fas fa-search"></i> البحث عن المختبرات</h2>
+            <div class="form-group">
+                <input type="text" id="search-input" placeholder="ابحث باسم المختبر، المحافظة، نوع الجهاز...">
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th class="serial-column">#</th>
+                            <th>اسم المختبر</th>
+                            <th>المحافظة</th>
+                            <th>نوع الجهاز</th>
+                            <th>رقم الهاتف</th>
+                            <th>الحالة</th>
+                            <th>تاريخ الإنشاء</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="search-results">
+                    </tbody>
+                </table>
+                <div id="no-results-message" class="no-data" style="display: none;">
+                    <i class="fas fa-search"></i>
+                    <p>لا توجد نتائج مطابقة للبحث</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="stats-section" class="section">
+            <h2><i class="fas fa-chart-pie"></i> إحصائيات المختبرات</h2>
+
+            <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div class="stat-card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
+                    <div class="stat-value" id="total-labs" style="font-size: 32px; font-weight: bold; color: var(--primary);">0</div>
+                    <div class="stat-label" style="color: var(--gray); margin-top: 10px;">إجمالي المختبرات</div>
+                </div>
+
+                <div class="stat-card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
+                    <div class="stat-value" id="active-labs" style="font-size: 32px; font-weight: bold; color: var(--success);">0</div>
+                    <div class="stat-label" style="color: var(--gray); margin-top: 10px;">مختبرات نشطة</div>
+                </div>
+
+                <div class="stat-card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
+                    <div class="stat-value" id="inactive-labs" style="font-size: 32px; font-weight: bold; color: var(--danger);">0</div>
+                    <div class="stat-label" style="color: var(--gray); margin-top: 10px;">مختبرات غير نشطة</div>
+                </div>
+
+                <div class="stat-card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
+                    <div class="stat-value" id="maintenance-labs" style="font-size: 32px; font-weight: bold; color: var(--warning);">0</div>
+                    <div class="stat-label" style="color: var(--gray); margin-top: 10px;">قيد الصيانة</div>
+                </div>
+
+                <div class="stat-card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
+                    <div class="stat-value" id="total-devices" style="font-size: 32px; font-weight: bold; color: var(--secondary);">0</div>
+                    <div class="stat-label" style="color: var(--gray); margin-top: 10px;">إجمالي الأجهزة</div>
+                </div>
+
+                <div class="stat-card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
+                    <div class="stat-value" id="total-tests" style="font-size: 32px; font-weight: bold; color: #6a11cb;">0</div>
+                    <div class="stat-label" style="color: var(--gray); margin-top: 10px;">إجمالي الفحوصات</div>
+                </div>
+
+                <div class="stat-card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
+                    <div class="stat-value" id="total-governorates" style="font-size: 32px; font-weight: bold; color: #008080;">0</div>
+                    <div class="stat-label" style="color: var(--gray); margin-top: 10px;">عدد المحافظات</div>
+                </div>
+            </div>
+
+            <div class="material-cost-stats">
+                <h4><i class="fas fa-money-bill-wave"></i> إحصائيات أسعار المواد التشغيلية</h4>
+                <p><b>الإجمالي:</b> <span id="total-material-cost">0</span> دينار</p>
+            </div>
+
+            <div class="device-type-stats">
+                <h3><i class="fas fa-microscope"></i> توزيع أنواع الأجهزة</h3>
+                <table id="device-type-stats-table">
+                    <thead>
+                        <tr>
+                            <th>نوع الجهاز</th>
+                            <th>العدد</th>
+                        </tr>
+                    </thead>
+                    <tbody id="device-type-stats-list">
+                    </tbody>
+                </table>
+            </div>
+            <div class="export-buttons">
+                <button class="btn export-btn" id="export-stats-btn"><i class="fas fa-file-pdf"></i> تصدير الإحصائيات إلى PDF</button>
+            </div>
+        </section>
+    </div>
+
+    <div id="lab-details-modal-overlay">
+        <div id="lab-details-modal">
+            <div id="lab-details-modal-header">
+                <span id="lab-details-modal-title"><i class="fas fa-flask"></i></span>
+                <button class="close-modal-btn" id="close-lab-details-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="lab-details-modal-body">
+                <div class="lab-details-card">
+                    <div class="detail-item">
+                        <label for="modal-lab-governorate">المحافظة</label>
+                        <select id="modal-lab-governorate">
+                            <option value="">اختر المحافظة</option>
+                            <option value="بغداد">بغداد</option>
+                            <option value="البصرة">البصرة</option>
+                            <option value="نينوى">نينوى</option>
+                            <option value="أربيل">أربيل</option>
+                            <option value="الأنبار">الأنبار</option>
+                            <option value="كربلاء">كربلاء</option>
+                            <option value="بابل">بابل</option>
+                            <option value="النجف">النجف</option>
+                            <option value="صلاح الدين">صلاح الدين</option>
+                            <option value="ذي قار">ذي قار</option>
+                            <option value="دهوك">دهوك</option>
+                            <option value="كركوك">كركوك</option>
+                            <option value="ديالى">ديالى</option>
+                            <option value="ميسان">ميسان</option>
+                            <option value="واسط">واسط</option>
+                            <option value="السليمانية">السليمانية</option>
+                            <option value="القادسية">القادسية</option>
+                            <option value="المثنى">المثنى</option>
+                        </select>
+                    </div>
+                    <div class="detail-item">
+                        <label for="modal-device-type">نوع الجهاز</label>
+                        <select id="modal-device-type">
+                            <option value="">اختر نوع الجهاز</option>
+                            <option value="جهاز تحليل الدم">جهاز تحليل الدم</option>
+                            <option value="جهاز تحليل البول">جهاز تحليل البول</option>
+                            <option value="جهاز تحليل الغازات في الدم">جهاز تحليل الغازات في الدم</option>
+                            <option value="جهاز الأشعة السينية (X-Ray)">جهاز الأشعة السينية (X-Ray)</option>
+                            <option value="جهاز التعقيم">جهاز ا��تعقيم</option>
+                            <option value="جهاز التنفس الاصطناعي">جهاز التنفس الاصطناعي</option>
+                            <option value="جهاز التصوير بالرنين المغناطيسي (MRI)">جهاز التصوير بالرنين المغناطيسي (MRI)</option>
+                            <option value="جهاز التصوير المقطعي المحوسب (CT)">جهاز التصوير المقطعي المحوسب (CT)</option>
+                            <option value="جهاز الطرد المركزي">جهاز الطرد المركزي</option>
+                            <option value="جهاز قياس السكر">جهاز قياس السكر</option>
+                            <option value="جهاز قياس النبض والأكسجين">جهاز قياس النبض والأكسجين</option>
+                            <option value="جهاز قياس ضغط الدم">جهاز قياس ضغط الدم</option>
+                            <option value="الحاضنة">الحاضنة</option>
+                            <option value="المجهر الضوئي">المجهر الضوئي</option>
+                            <option value="تجميد العينات">جهاز تجميد العينات</option>
+                            <option value="فوجي فيلم">فوجي فيلم</option>
+                            <option value="CVC">CVC</option>
+                            <option value="أخرى (كتابة)">أخرى (كتابة)</option>
+                        </select>
+                        <input type="text" id="modal-device-type-other" placeholder="أدخل نوع الجهاز" style="display: none; margin-top: 5px;">
+                    </div>
+                    <div class="detail-item">
+                        <label for="modal-device-count">عدد الأجهزة</label>
+                        <input type="number" id="modal-device-count" min="1">
+                    </div>
+                    <div class="detail-item">
+                        <label for="modal-lab-phone">رقم الهاتف</label>
+                        <input type="tel" id="modal-lab-phone" pattern="0\d{9}">
+                    </div>
+                    <div class="detail-item">
+                        <label for="modal-material-cost">سعر المواد التشغيلية</label>
+                        <input type="number" id="modal-material-cost" min="0">
+                    </div>
+                    <div class="detail-item">
+                        <label for="modal-tests-count">عدد الفحوصات</label>
+                        <input type="number" id="modal-tests-count" min="0">
+                    </div>
+                    <div class="detail-item">
+                        <label for="modal-lab-status">حالة المختبر</label>
+                        <select id="modal-lab-status">
+                            <option value="active">نشط</option>
+                            <option value="inactive">غير نشط</option>
+                            <option value="maintenance">قيد الصيانة</option>
+                        </select>
+                        <span id="modal-lab-current-status" class="status-badge" style="display: none;"></span>
+                    </div>
+                    <div class="detail-item">
+                        <label for="modal-creation-date">تاريخ الإنشاء</label>
+                        <input type="date" id="modal-creation-date">
+                    </div>
+                    <div class="detail-item" style="grid-column: 1 / -1;">
+                        <label for="modal-lab-notes">ملاحظات</label>
+                        <textarea id="modal-lab-notes" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div id="lab-details-modal-footer">
+                <button class="btn btn-sm btn-primary" id="save-lab-details-btn" data-lab-id="">
+                    <i class="fas fa-save"></i> حفظ التعديلات
+                </button>
+                <button class="btn btn-sm close-modal-btn" id="close-lab-details-modal-footer">
+                    <i class="fas fa-times"></i> إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="a4-export-container" class="a4-export-container"></div>
+
+    <div class="loading-indicator" id="loading-indicator">
+        <div class="loading-spinner"></div>
+        <div>جاري معالجة الطلب، الرجاء الانتظار...</div>
+    </div>
+
+    <script>
+        // data.js
+        const LABS_STORAGE_KEY = 'labs';
+        const SAVED_DEVICE_TYPES_KEY = 'savedDeviceTypes';
+        const LAST_GOVERNORATE_KEY = 'lastGovernorate';
+
+        let labs = JSON.parse(localStorage.getItem(LABS_STORAGE_KEY)) || [];
+        let nextId = labs.length > 0 ? Math.max(...labs.map(lab => lab.id)) + 1 : 1;
+        let savedDeviceTypes = JSON.parse(localStorage.getItem(SAVED_DEVICE_TYPES_KEY)) || [];
+
+        function getLabs() {
+            return labs;
+        }
+
+        function getLabById(id) {
+            return labs.find(lab => lab.id === id);
+        }
+
+        function addLab(labData) {
+            const newLab = { id: nextId++, ...labData };
+            labs.push(newLab);
+            saveLabs();
+            saveLastGovernorate(labData.governorate);
+            updateSavedDeviceTypes(labData.device);
+            return newLab;
+        }
+
+        function updateLab(id, updatedData) {
+            const index = labs.findIndex(lab => lab.id === id);
+            if (index !== -1) {
+                labs[index] = { ...labs[index], ...updatedData, id: id };
+                saveLabs();
+                saveLastGovernorate(updatedData.governorate);
+                updateSavedDeviceTypes(updatedData.device);
+                return true;
+            }
+            return false;
+        }
+
+        function deleteLab(id) {
+            labs = labs.filter(lab => lab.id !== id);
+            saveLabs();
+        }
+
+        function saveLabs() {
+            localStorage.setItem(LABS_STORAGE_KEY, JSON.stringify(labs));
+        }
+
+        function getSavedDeviceTypes() {
+            return savedDeviceTypes;
+        }
+
+        function updateSavedDeviceTypes(deviceType) {
+            if (deviceType && deviceType !== 'أخرى (كتابة)' && !savedDeviceTypes.includes(deviceType)) {
+                savedDeviceTypes.unshift(deviceType);
+                if (savedDeviceTypes.length > 5) {
+                    savedDeviceTypes.pop();
+                }
+                localStorage.setItem(SAVED_DEVICE_TYPES_KEY, JSON.stringify(savedDeviceTypes));
+            }
+        }
+
+        function getLastGovernorate() {
+            return localStorage.getItem(LAST_GOVERNORATE_KEY);
+        }
+
+        function saveLastGovernorate(governorate) {
+            if (governorate) {
+                localStorage.setItem(LAST_GOVERNORATE_KEY, governorate);
+            }
+        }
+
+        function backupData() {
+            try {
+                const backupData = {
+                    version: 1,
+                    labs: getLabs(),
+                    savedDeviceTypes: getSavedDeviceTypes(),
+                    lastGovernorate: getLastGovernorate(),
+                    nextId: nextId,
+                    timestamp: new Date().toISOString()
+                };
+
+                const dataStr = JSON.stringify(backupData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileName = `labs_backup_${new Date().toISOString().slice(0,10)}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileName);
+                linkElement.click();
+                
+                showNotification('تم إنشاء نسخة احتياطية بنجاح', 'success');
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                showNotification('حدث خطأ أثناء إنشاء النسخة الاحتياطية', 'danger');
+            }
+        }
+
+        function restoreData(file) {
+            try {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const backupData = JSON.parse(e.target.result);
+                        
+                        if (!backupData || typeof backupData !== 'object') {
+                            throw new Error('الملف لا يحتوي على بيانات صالحة');
+                        }
+                        
+                        if (!backupData.labs || !Array.isArray(backupData.labs)) {
+                            throw new Error('البيانات لا تحتوي على قائمة المختبرات');
+                        }
+                        
+                        const isValid = backupData.labs.every(lab => {
+                            return lab.id !== undefined && lab.name && lab.governorate && lab.device;
+                        });
+                        
+                        if (!isValid) {
+                            throw new Error('بعض بيانات المختبرات غير مكتملة');
+                        }
+                        
+                        if (confirm('هل أنت متأكد أنك تريد استعادة النسخة الاحتياطية؟ سيتم استبدال جميع البيانات الحالية.')) {
+                            labs = backupData.labs;
+                            savedDeviceTypes = backupData.savedDeviceTypes || [];
+                            nextId = backupData.nextId || (labs.length > 0 ? Math.max(...labs.map(lab => lab.id)) + 1 : 1);
+                            
+                            saveLabs();
+                            localStorage.setItem(SAVED_DEVICE_TYPES_KEY, JSON.stringify(savedDeviceTypes));
+                            if (backupData.lastGovernorate) {
+                                localStorage.setItem(LAST_GOVERNORATE_KEY, backupData.lastGovernorate);
+                            }
+                            
+                            displayLabs();
+                            updateStats();
+                            displayDeviceTypeStats(getLabs());
+                            showNotification('تم استعادة النسخة الاحتياطية بنجاح', 'success');
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing backup file:', parseError);
+                        showNotification(`خطأ في تحليل الملف: ${parseError.message}`, 'danger');
+                    }
+                };
+                
+                reader.onerror = function() {
+                    showNotification('حدث خطأ أثناء قراءة الملف', 'danger');
+                };
+                
+                reader.readAsText(file);
+            } catch (error) {
+                console.error('Error restoring backup:', error);
+                showNotification(`حدث خطأ غير متوقع: ${error.message}`, 'danger');
+            }
+        }
+
+        // stats.js
+        function updateStats() {
+            try {
+                const totalLabsElement = document.getElementById('total-labs');
+                const activeLabsElement = document.getElementById('active-labs');
+                const inactiveLabsElement = document.getElementById('inactive-labs');
+                const maintenanceLabsElement = document.getElementById('maintenance-labs');
+                const totalDevicesElement = document.getElementById('total-devices');
+                const totalTestsElement = document.getElementById('total-tests');
+                const totalGovernoratesElement = document.getElementById('total-governorates');
+                const totalMaterialCostElement = document.getElementById('total-material-cost');
+                const deviceStatsListElement = document.getElementById('device-type-stats-list');
+
+                const labsData = getLabs();
+
+                if (totalLabsElement) totalLabsElement.textContent = labsData.length;
+                if (activeLabsElement) activeLabsElement.textContent = labsData.filter(l => l.status === 'active').length;
+                if (inactiveLabsElement) inactiveLabsElement.textContent = labsData.filter(l => l.status === 'inactive').length;
+                if (maintenanceLabsElement) maintenanceLabsElement.textContent = labsData.filter(l => l.status === 'maintenance').length;
+
+                const totalDevices = labsData.reduce((sum, lab) => sum + (parseInt(lab.count) || 0), 0);
+                if (totalDevicesElement) totalDevicesElement.textContent = totalDevices;
+
+                const totalTests = labsData.reduce((sum, lab) => sum + (parseInt(lab.testsCount) || 0), 0);
+                if (totalTestsElement) totalTestsElement.textContent = totalTests;
+
+                const governorates = [...new Set(labsData.map(lab => lab.governorate).filter(Boolean))];
+                if (totalGovernoratesElement) totalGovernoratesElement.textContent = governorates.length;
+
+                const materialCosts = labsData.map(lab => parseFloat(lab.materialCost) || 0);
+                const validCosts = materialCosts.filter(cost => !isNaN(cost));
+                const totalMaterialCost = validCosts.reduce((sum, cost) => sum + cost, 0);
+                if (totalMaterialCostElement) totalMaterialCost.textContent = totalMaterialCost.toFixed(2);
+
+                if (deviceStatsListElement) {
+                    const deviceTypes = {};
+                    labsData.forEach(lab => {
+                        if (lab.device) {
+                            deviceTypes[lab.device] = (deviceTypes[lab.device] || 0) + parseInt(lab.count) || 0;
+                        }
+                    });
+
+                    deviceStatsListElement.innerHTML = '';
+
+                    if (Object.keys(deviceTypes).length === 0) {
+                        let row = document.createElement('tr');
+                        let td = document.createElement('td');
+                        td.colSpan = 2;
+                        td.style.textAlign = 'center';
+                        td.style.color = 'var(--gray)';
+                        td.textContent = 'لا توجد بيانات عن أنواع الأجهزة';
+                        row.appendChild(td);
+                        deviceStatsListElement.appendChild(row);
+                    } else {
+                        Object.entries(deviceTypes).sort(([, countA], [, countB]) => countB - countA).forEach(([type, count]) => {
+                            let row = document.createElement('tr');
+                            row.innerHTML = `<td>${type}</td><td>${count}</td>`;
+                            deviceStatsListElement.appendChild(row);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating statistics:', error);
+                showNotification('حدث خطأ أثناء تحديث الإحصائيات', 'danger');
+            }
+        }
+
+        function displayDeviceTypeStats(labsData) {
+            try {
+                const deviceStatsListElement = document.getElementById('device-type-stats-list');
+                if (deviceStatsListElement) {
+                    const deviceTypes = {};
+                    labsData.forEach(lab => {
+                        if (lab.device) {
+                            deviceTypes[lab.device] = (deviceTypes[lab.device] || 0) + parseInt(lab.count) || 0;
+                        }
+                    });
+
+                    deviceStatsListElement.innerHTML = '';
+
+                    if (Object.keys(deviceTypes).length === 0) {
+                        let row = document.createElement('tr');
+                        let td = document.createElement('td');
+                        td.colSpan = 2;
+                        td.style.textAlign = 'center';
+                        td.style.color = 'var(--gray)';
+                        td.textContent = 'لا توجد بيانات عن أنواع الأجهزة';
+                        row.appendChild(td);
+                        deviceStatsListElement.appendChild(row);
+                    } else {
+                        Object.entries(deviceTypes).sort(([, countA], [, countB]) => countB - countA).forEach(([type, count]) => {
+                            let row = document.createElement('tr');
+                            row.innerHTML = `<td>${type}</td><td>${count}</td>`;
+                            deviceStatsListElement.appendChild(row);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error displaying device type statistics:', error);
+            }
+        }
+
+        // export.js
+        async function exportTableToPdf() {
+            showLoading();
+            const sourceTableContainer = document.getElementById('labs-table-container');
+
+            if (!sourceTableContainer) {
+                hideLoading();
+                showNotification('لا يوجد جدول لتصديره', 'danger');
+                return;
+            }
+
+            try {
+                const canvas = await html2canvas(sourceTableContainer, {
+                    scale: 2,
+                    allowTaint: true,
+                    useCORS: true,
+                    logging: false,
+                    onclone: function(clonedDoc) {
+                        const clonedTableContainer = clonedDoc.getElementById('labs-table-container');
+                        if (clonedTableContainer) {
+                            const clonedTable = clonedTableContainer.querySelector('table');
+                            if (clonedTable) {
+                                const headerRow = clonedTable.querySelector('thead tr');
+                                if (headerRow) {
+                                    const actionsColumnIndex = Array.from(headerRow.children).findIndex(th => th.textContent.trim() === 'الإجراءات');
+                                    if (actionsColumnIndex > -1) {
+                                        headerRow.children[actionsColumnIndex].remove();
+                                        const bodyRows = clonedTable.querySelectorAll('tbody tr');
+                                        bodyRows.forEach(row => {
+                                            if (row.children.length > actionsColumnIndex) {
+                                                row.children[actionsColumnIndex].remove();
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
+
+                const filename = 'قائمة_المختبرات.pdf';
+                setTimeout(function() {
+                    pdf.save(filename);
+                    hideLoading();
+                    showNotification('تم تصدير قائمة المختبرات إلى PDF بنجاح', 'success');
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error converting HTML to image:', error);
+                hideLoading();
+                showNotification('حدث خطأ أثناء تصدير PDF', 'danger');
+            }
+        }
+
+        async function exportStatsToPdf() {
+            showLoading();
+            const sourceElement = document.getElementById('stats-section');
+
+            if (!sourceElement) {
+                hideLoading();
+                showNotification('لا يوجد قسم إحصائيات لتصديره', 'danger');
+                return;
+            }
+
+            try {
+                const canvas = await html2canvas(sourceElement, {
+                    scale: 1,
+                    allowTaint: true,
+                    useCORS: true,
+                    logging: false,
+                    onclone: function(clonedDoc) {
+                    }
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
+
+                const filename = 'إحصائيات_المختبرات.pdf';
+                setTimeout(function() {
+                    pdf.save(filename);
+                    hideLoading();
+                    showNotification('تم تصدير الإحصائيات إلى PDF بنجاح', 'success');
+                }, 2000);
+            } catch (error) {
+                console.error('Error converting stats section to image:', error);
+                hideLoading();
+                showNotification('حدث خطأ أثناء تصدير PDF', 'danger');
+            }
+        }
+
+        async function exportLabDetailsToPdf(lab) {
+            showLoading();
+            const a4ExportContainer = document.getElementById('a4-export-container');
+
+            if (!a4ExportContainer) {
+                hideLoading();
+                showNotification('حدث خطأ في تهيئة حاوية التصدير', 'danger');
+                return;
+            }
+
+            let labDetailsHtml = `
+                <div style="font-family: 'Tajawal', Arial, sans-serif; direction: rtl; padding: 20px;">
+                    <h2 style="color: #4361ee; text-align: center; margin-bottom: 20px;">تفاصيل المختبر</h2>
+                    <p><b>اسم المختبر:</b> ${lab.name || 'غير محدد'}</p>
+                    <p><b>المحافظة:</b> ${lab.governorate || 'غير محدد'}</p>
+                    <p><b>نوع الجهاز:</b> ${lab.device || 'غير محدد'}</p>
+                    <p><b>عدد الأجهزة:</b> ${lab.count || '0'}</p>
+                    <p><b>رقم الهاتف:</b> ${lab.phone || 'غير متوفر'}</p>
+                    <p><b>سعر المواد التشغيلية:</b> ${lab.materialCost ? lab.materialCost + ' دينار' : 'غير محدد'}</p>
+                    <p><b>عدد الفحوصات:</b> ${lab.testsCount || '0'}</p>
+                    <p><b>الحالة:</b> ${getStatusText(lab.status)}</p>
+                    <p><b>تاريخ الإنشاء:</b> ${formatDate(lab.creationDate) || 'غير محدد'}</p>
+                    <p><b>ملاحظات:</b> ${lab.notes || 'لا يوجد ملاحظات'}</p>
+                </div>
+            `;
+
+            a4ExportContainer.innerHTML = labDetailsHtml;
+
+            try {
+                const canvas = await html2canvas(a4ExportContainer, {
+                    scale: 1,
+                    allowTaint: true,
+                    useCORS: true,
+                    logging: false
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
+
+                const filename = `تفاصيل_مختبر_${lab.name.replace(/\s+/g, '_')}.pdf`;
+                setTimeout(function() {
+                    pdf.save(filename);
+                    hideLoading();
+                    showNotification(`تم تصدير تفاصيل مختبر "${lab.name}" إلى PDF بنجاح`, 'success');
+                    a4ExportContainer.innerHTML = '';
+                }, 2000);
+            } catch (error) {
+                console.error('Error exporting lab details to PDF:', error);
+                hideLoading();
+                showNotification('حدث خطأ أثناء تصدير PDF', 'danger');
+                a4ExportContainer.innerHTML = '';
+            }
+        }
+
+        // ui.js
+        document.addEventListener('DOMContentLoaded', initialize);
+        let labDetailsModalOverlay;
+        let labDetailsModal;
+        let labDetailsModalTitle;
+        let modalLabGovernorate;
+        let modalDeviceType;
+        let modalDeviceTypeOther;
+        let modalDeviceCount;
+        let modalLabPhone;
+        let modalMaterialCost;
+        let modalTestsCount;
+        let modalLabStatus;
+        let modalCreationDate;
+        let modalLabNotes;
+        let closeLabDetailsModalButtons;
+        let saveLabDetailsBtn;
+        let cancelEditLabDetailsBtn;
+        let currentLabIdForEdit = null;
+        let currentPage = 1;
+        const pageSize = 10;
+        let currentSortColumn = null;
+        let currentSortDirection = 'asc';
+        let currentLabsData = [];
+
+        function initialize() {
+            try {
+                labDetailsModalOverlay = document.getElementById('lab-details-modal-overlay');
+                labDetailsModal = document.getElementById('lab-details-modal');
+                labDetailsModalTitle = document.getElementById('lab-details-modal-title');
+                modalLabGovernorate = document.getElementById('modal-lab-governorate');
+                modalDeviceType = document.getElementById('modal-device-type');
+                modalDeviceTypeOther = document.getElementById('modal-device-type-other');
+                modalDeviceCount = document.getElementById('modal-device-count');
+                modalLabPhone = document.getElementById('modal-lab-phone');
+                modalMaterialCost = document.getElementById('modal-material-cost');
+                modalTestsCount = document.getElementById('modal-tests-count');
+                modalLabStatus = document.getElementById('modal-lab-status');
+                modalCreationDate = document.getElementById('modal-creation-date');
+                modalLabNotes = document.getElementById('modal-lab-notes');
+                closeLabDetailsModalButtons = document.querySelectorAll('#close-lab-details-modal, #close-lab-details-modal-footer');
+                saveLabDetailsBtn = document.getElementById('save-lab-details-btn');
+                cancelEditLabDetailsBtn = document.getElementById('cancel-edit-lab-details-btn');
+
+                closeLabDetailsModalButtons.forEach(button => {
+                    button.addEventListener('click', hideLabDetailsModal);
+                });
+
+                if (saveLabDetailsBtn) {
+                    saveLabDetailsBtn.addEventListener('click', handleSaveLabDetails);
+                }
+                if (cancelEditLabDetailsBtn) {
+                    cancelEditLabDetailsBtn.addEventListener('click', hideLabDetailsModal);
+                }
+
+                updateCurrentDate();
+                showSection('view-section');
+                attachEventListeners();
+                loadSavedDeviceTypes();
+                displayLabs();
+                updateStats();
+                displayDeviceTypeStats(getLabs());
+                prefillGovernorate();
+
+                const sortableHeaders = document.querySelectorAll('#labs-table-container th[data-sort]');
+                sortableHeaders.forEach(header => {
+                    header.classList.add('sortable');
+                });
+
+                if (modalDeviceType) {
+                    modalDeviceType.addEventListener('change', function() {
+                        const otherInputVisible = this.value === 'أخرى (كتابة)';
+                        if (modalDeviceTypeOther) {
+                            modalDeviceTypeOther.style.display = otherInputVisible ? 'block' : 'none';
+                            modalDeviceTypeOther.required = otherInputVisible;
+                        }
+                    });
+                }
+
+                document.getElementById('backup-btn').addEventListener('click', backupData);
+                document.getElementById('restore-btn').addEventListener('click', () => {
+                    document.getElementById('backup-file-input').click();
+                });
+                document.getElementById('backup-file-input').addEventListener('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        restoreData(e.target.files[0]);
+                        this.value = '';
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error during initialization:', error);
+                showNotification('حدث خطأ في تهيئة التطبيق', 'danger');
+            }
+        }
+
+        function prefillGovernorate() {
+            const governorateSelect = document.getElementById('lab-governorate');
+            const lastGovernorate = getLastGovernorate();
+            if (governorateSelect && lastGovernorate) {
+                governorateSelect.value = lastGovernorate;
+            }
+        }
+
+        function loadSavedDeviceTypes() {
+            const savedTypesContainer = document.getElementById('saved-device-types-container');
+            const savedTypesList = document.getElementById('saved-device-types-list');
+            const savedTypes = getSavedDeviceTypes();
+
+            if (savedTypes.length > 0 && savedTypesContainer && savedTypesList) {
+                savedTypesContainer.style.display = 'block';
+                savedTypesList.innerHTML = '';
+                savedTypes.forEach(type => {
+                    const item = document.createElement('span');
+                    item.className = 'saved-device-type-item';
+                    item.textContent = type;
+                    item.addEventListener('click', () => {
+                        document.getElementById('device-type').value = type;
+                        const otherInput = document.getElementById('device-type-other');
+                        if (otherInput) {
+                            otherInput.style.display = 'none';
+                            otherInput.removeAttribute('required');
+                        }
+                        const deviceTypeSelect = document.getElementById('device-type');
+                        if (deviceTypeSelect) {
+                            deviceTypeSelect.dispatchEvent(new Event('change'));
+                        }
+                    });
+                    savedTypesList.appendChild(item);
+                });
+            } else if (savedTypesContainer) {
+                savedTypesContainer.style.display = 'none';
+            }
+        }
+
+        function updateCurrentDate() {
+            try {
+                const now = new Date();
+                const options = { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' };
+                const formattedDate = now.toLocaleDateString('ar-EG', options);
+                document.getElementById('current-date').textContent = formattedDate;
+            } catch (error) {
+                console.error('Error updating date:', error);
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('ar-EG');
+            } catch (error) {
+                console.error('Error formatting date:', error);
+                return '';
+            }
+        }
+
+        function getStatusText(status) {
+            const statusTexts = { 'active': 'نشط', 'inactive': 'غير نشط', 'maintenance': 'صيانة' };
+            return statusTexts[status] || status;
+        }
+
+        function showSection(sectionId) {
+            try {
+                document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+                document.querySelectorAll('.menu button').forEach(btn => btn.classList.remove('active'));
+
+                const sectionToShow = document.getElementById(sectionId);
+                const buttonToActivate = document.getElementById(`${sectionId.replace('-section', '-btn')}`);
+
+                if (sectionToShow) {
+                    sectionToShow.classList.add('active');
+                }
+                if (buttonToActivate) {
+                    buttonToActivate.classList.add('active');
+                }
+
+                if (sectionId === 'view-section') {
+                    currentPage = 1;
+                    displayLabs();
+                }
+                else if (sectionId === 'stats-section') {
+                    updateStats();
+                    displayDeviceTypeStats(getLabs());
+                } else if (sectionId === 'search-section') {
+                    const searchInput = document.getElementById('search-input');
+                    if (searchInput) searchInput.value = '';
+                    const searchResults = document.getElementById('search-results');
+                    if (searchResults) searchResults.innerHTML = '';
+                    const noResultsMessage = document.getElementById('no-results-message');
+                    if (noResultsMessage) noResultsMessage.style.display = 'none';
+                } else if (sectionId === 'add-section') {
+                    const addForm = document.getElementById('add-form');
+                    if (addForm) {
+                        addForm.reset();
+                        delete addForm.dataset.editingId;
+                        addForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> حفظ البيانات';
+                        const deviceTypeSelect = document.getElementById('device-type');
+                        const deviceTypeOtherInput = document.getElementById('device-type-other');
+                        if (deviceTypeSelect) deviceTypeSelect.value = '';
+                        if (deviceTypeOtherInput) {
+                            deviceTypeOtherInput.style.display = 'none';
+                            deviceTypeOtherInput.removeAttribute('required');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error showing section:', error);
+                showNotification('حدث خطأ أثناء التنقل بين الأقسام', 'danger');
+            }
+        }
+
+        function displayLabs() {
+            try {
+                const labsData = getLabs();
+                currentLabsData = [...labsData];
+                applyFiltersAndSort();
+            } catch (error) {
+                console.error('Error preparing labs for display:', error);
+                showNotification('حدث خطأ أثناء تجهيز قائمة المختبرات', 'danger');
+            }
+        }
+
+        function applyFiltersAndSort() {
+            let filteredAndSortedLabs = [...currentLabsData];
+
+            if (currentSortColumn) {
+                filteredAndSortedLabs.sort((a, b) => {
+                    const aValue = a[currentSortColumn];
+                    const bValue = b[currentSortColumn];
+
+                    let comparison = 0;
+                    if (typeof aValue === 'string' && typeof bValue === 'string') {
+                        comparison = aValue.localeCompare(bValue, 'ar');
+                    } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+                        comparison = aValue - bValue;
+                    } else if (aValue < bValue) {
+                        comparison = -1;
+                    } else if (aValue > bValue) {
+                        comparison = 1;
+                    }
+
+                    return currentSortDirection === 'asc' ? comparison : comparison * -1;
+                });
+            }
+
+            renderLabTable(filteredAndSortedLabs);
+        }
+
+        function renderLabTable(labsToRender) {
+            const tableBody = document.getElementById('labs-table');
+            const noLabsMessage = document.getElementById('no-labs-message');
+            const paginationControls = document.getElementById('pagination-controls');
+
+            if (!tableBody || !noLabsMessage || !paginationControls) return;
+
+            tableBody.innerHTML = '';
+            paginationControls.innerHTML = '';
+
+            if (labsToRender.length === 0) {
+                noLabsMessage.style.display = 'block';
+                return;
+            } else {
+                noLabsMessage.style.display = 'none';
+            }
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const currentLabs = labsToRender.slice(startIndex, endIndex);
+
+            currentLabs.forEach((lab, index) => {
+                const displayIndex = startIndex + index + 1;
+                let row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="serial-column">${displayIndex}</td>
+                    <td>${lab.name || 'غير محدد'}</td>
+                    <td>${lab.governorate || 'غير محدد'}</td>
+                    <td>${lab.device || 'غير محدد'}</td>
+                    <td>${lab.count || '0'}</td>
+                    <td>${lab.phone || 'غير متوفر'}</td>
+                    <td>${lab.materialCost ? lab.materialCost + ' دينار' : 'غير محدد'}</td>
+                    <td>${lab.testsCount || '0'}</td>
+                    <td><span class="status-badge status-${lab.status}">${getStatusText(lab.status)}</span></td>
+                    <td>${formatDate(lab.creationDate) || 'غير محدد'}</td>
+                    <td>${lab.notes ? lab.notes.substring(0, 20) + (lab.notes.length > 20 ? '...' : '') : 'لا يوجد'}</td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-id="${lab.id}" aria-expanded="false">
+                                <i class="fas fa-cog"></i> الإجراءات
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item show-details-btn" href="#" data-id="${lab.id}"><i class="fas fa-eye"></i> معاينة</a></li>
+                                <li><a class="dropdown-item view-details-btn" href="#" data-id="${lab.id}"><i class="fas fa-file-pdf"></i> تصدير</a></li>
+                                <li><a class="dropdown-item delete-btn" href="#" data-id="${lab.id}"><i class="fas fa-trash"></i> حذف</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            renderPagination(labsToRender.length);
+        }
+
+        function renderPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / pageSize);
+            const paginationControls = document.getElementById('pagination-controls');
+
+            if (totalPages <= 1) {
+                paginationControls.innerHTML = '';
+                return;
+            }
+
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'السابق';
+            prevButton.className = 'pagination-button';
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    applyFiltersAndSort();
+                }
+            });
+            prevButton.disabled = currentPage === 1;
+            paginationControls.appendChild(prevButton);
+
+            if (totalPages <= 5) {
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i;
+                    pageButton.className = 'pagination-button';
+                    if (i === currentPage) {
+                        pageButton.classList.add('active');
+                    }
+                    pageButton.addEventListener('click', () => {
+                        currentPage = i;
+                        applyFiltersAndSort();
+                    });
+                    paginationControls.appendChild(pageButton);
+                }
+            } else {
+                const firstPageButton = document.createElement('button');
+                firstPageButton.textContent = '1';
+                firstPageButton.className = 'pagination-button';
+                if (1 === currentPage) {
+                    firstPageButton.classList.add('active');
+                }
+                firstPageButton.addEventListener('click', () => {
+                    currentPage = 1;
+                    applyFiltersAndSort();
+                });
+                paginationControls.appendChild(firstPageButton);
+
+                if (currentPage > 3) {
+                    const dotsSpan = document.createElement('span');
+                    dotsSpan.textContent = '...';
+                    paginationControls.appendChild(dotsSpan);
+                }
+
+                if (currentPage >= 3 && currentPage <= totalPages - 2) {
+                    const currentPageButton = document.createElement('button');
+                    currentPageButton.textContent = currentPage;
+                    currentPageButton.className = 'pagination-button active';
+                    paginationControls.appendChild(currentPageButton);
+                } else if (currentPage === 2) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = 2;
+                    pageButton.className = 'pagination-button';
+                    pageButton.addEventListener('click', () => {
+                        currentPage = 2;
+                        applyFiltersAndSort();
+                    });
+                    paginationControls.appendChild(pageButton);
+                } else if (currentPage === totalPages - 1) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = totalPages - 1;
+                    pageButton.className = 'pagination-button';
+                    pageButton.addEventListener('click', () => {
+                        currentPage = totalPages - 1;
+                        applyFiltersAndSort();
+                    });
+                    paginationControls.appendChild(pageButton);
+                }
+
+                if (currentPage < totalPages - 2 && totalPages > 3) {
+                    const dotsSpan = document.createElement('span');
+                    dotsSpan.textContent = '...';
+                    paginationControls.appendChild(dotsSpan);
+                }
+
+                if (totalPages > 1) {
+                    const lastPageButton = document.createElement('button');
+                    lastPageButton.textContent = totalPages;
+                    lastPageButton.className = 'pagination-button';
+                    if (totalPages === currentPage) {
+                        lastPageButton.classList.add('active');
+                    }
+                    lastPageButton.addEventListener('click', () => {
+                        currentPage = totalPages;
+                        applyFiltersAndSort();
+                    });
+                    paginationControls.appendChild(lastPageButton);
+                }
+            }
+
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'التالي';
+            nextButton.className = 'pagination-button';
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    applyFiltersAndSort();
+                }
+            });
+            nextButton.disabled = currentPage === totalPages;
+            paginationControls.appendChild(nextButton);
+        }
+
+        function attachEventListeners() {
+            try {
+                document.getElementById('view-btn').addEventListener('click', () => showSection('view-section'));
+                document.getElementById('add-btn').addEventListener('click', () => showSection('add-section'));
+                document.getElementById('search-btn').addEventListener('click', () => showSection('search-section'));
+                document.getElementById('stats-btn').addEventListener('click', () => showSection('stats-section'));
+
+                const addFormElement = document.getElementById('add-form');
+                if (addFormElement) {
+                    addFormElement.addEventListener('submit', handleAddFormSubmit);
+                }
+
+                const cancelAddButton = document.getElementById('cancel-add');
+                if (cancelAddButton) {
+                    cancelAddButton.addEventListener('click', () => showSection('view-section'));
+                }
+
+                const searchInput = document.getElementById('search-input');
+                if (searchInput) {
+                    searchInput.addEventListener('input', searchLabs);
+                }
+
+                const exportBtn = document.getElementById('export-btn');
+                if (exportBtn) {
+                    exportBtn.addEventListener('click', exportTableToPdf);
+                }
+
+                const exportStatsBtn = document.getElementById('export-stats-btn');
+                if (exportStatsBtn) {
+                    exportStatsBtn.addEventListener('click', exportStatsToPdf);
+                }
+
+                const labsTableContainer = document.getElementById('labs-table-container');
+                if (labsTableContainer) {
+                    labsTableContainer.addEventListener('click', handleLabsTableAction);
+                }
+
+                const searchResultsContainer = document.getElementById('search-results');
+                if (searchResultsContainer) {
+                    searchResultsContainer.addEventListener('click', handleSearchResultsTableAction);
+                }
+
+                document.addEventListener('click', function(event) {
+                    if (!event.target.matches('.dropdown-toggle')) {
+                        const dropdowns = document.querySelectorAll('.dropdown-menu');
+                        dropdowns.forEach(dropdown => {
+                            if (dropdown.style.display === 'block') {
+                                dropdown.style.display = 'none';
+                            }
+                        });
+                    }
+                });
+
+                const deviceTypeSelect = document.getElementById('device-type');
+                const deviceTypeOtherInput = document.getElementById('device-type-other');
+
+                if (deviceTypeSelect) {
+                    deviceTypeSelect.addEventListener('change', function() {
+                        const otherInputVisible = this.value === 'أخرى (كتابة)';
+                        deviceTypeOtherInput.style.display = otherInputVisible ? 'block' : 'none';
+                        deviceTypeOtherInput.required = otherInputVisible;
+                    });
+                }
+
+                const sortableHeaders = document.querySelectorAll('#labs-table-container th[data-sort]');
+                sortableHeaders.forEach(header => {
+                    header.addEventListener('click', () => handleSort(header.dataset.sort));
+                });
+
+            } catch (error) {
+                console.error('Error attaching event listeners:', error);
+                showNotification('حدث خطأ في ربط الأحداث', 'danger');
+            }
+        }
+
+        function handleSort(column) {
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+            resetSortIcons();
+            const header = document.querySelector(`#labs-table-container th[data-sort="${column}"]`);
+            if (header) {
+                header.classList.add(currentSortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+            }
+            applyFiltersAndSort();
+        }
+
+        function resetSortIcons() {
+            const headers = document.querySelectorAll('#labs-table-container th[data-sort]');
+            headers.forEach(header => {
+                header.classList.remove('sorted-asc', 'sorted-desc');
+            });
+        }
+
+        function handleAddFormSubmit(e) {
+            e.preventDefault();
+            const form = this;
+            const labName = document.getElementById('lab-name').value.trim();
+            const labGovernorate = document.getElementById('lab-governorate').value;
+            let deviceType = document.getElementById('device-type').value;
+            const deviceTypeOther = document.getElementById('device-type-other').value.trim();
+            const deviceCount = document.getElementById('device-count').value.trim();
+            const labPhone = document.getElementById('lab-phone').value.trim();
+            const materialCost = document.getElementById('material-cost').value.trim();
+            const testsCount = document.getElementById('tests-count').value.trim();
+            const labStatus = document.getElementById('lab-status').value;
+            const labNotes = document.getElementById('lab-notes').value.trim();
+            const creationDate = document.getElementById('creation-date').value;
+
+            if (deviceType === 'أخرى (كتابة)') {
+                deviceType = deviceTypeOther;
+            }
+
+            if (!labName) {
+                showNotification('الرجاء إدخال اسم المختبر', 'danger');
+                return;
+            }
+            if (!labGovernorate) {
+                showNotification('الرجاء اختيار المحافظة', 'danger');
+                return;
+            }
+            if (!deviceType) {
+                showNotification('الرجاء اختيار أو إدخال نوع الجهاز', 'danger');
+                return;
+            }
+            if (deviceType === 'أخرى (كتابة)' && !deviceTypeOther) {
+                showNotification('الرجاء إدخال نوع الجهاز', 'danger');
+                return;
+            }
+
+            const phoneRegex = /^0\d{9}$/;
+            if (labPhone && !phoneRegex.test(labPhone)) {
+                showNotification('الرجاء إدخال رقم هاتف بتنسيق صحيح (مثال: 07701234567)', 'danger');
+                return;
+            }
+
+            const parsedDeviceCount = parseInt(deviceCount);
+            if (deviceCount && (isNaN(parsedDeviceCount) || parsedDeviceCount < 0)) {
+                showNotification('الرجاء إدخال عدد أجهزة صالح', 'danger');
+                return;
+            }
+
+            const parsedMaterialCost = parseFloat(materialCost);
+            if (materialCost && isNaN(parsedMaterialCost)) {
+                showNotification('الرجاء إدخال سعر مواد تشغيلية صالح', 'danger');
+                return;
+            }
+
+            const parsedTestsCount = parseInt(testsCount);
+            if (testsCount && (isNaN(parsedTestsCount) || parsedTestsCount < 0)) {
+                showNotification('الرجاء إدخال عدد فحوصات صالح', 'danger');
+                return;
+            }
+
+            const editingId = form.dataset.editingId;
+            const labData = {
+                name: labName,
+                governorate: labGovernorate,
+                device: deviceType,
+                count: isNaN(parsedDeviceCount) ? 0 : parsedDeviceCount,
+                phone: labPhone,
+                materialCost: isNaN(parsedMaterialCost) ? 0 : parsedMaterialCost,
+                testsCount: isNaN(parsedTestsCount) ? 0 : parsedTestsCount,
+                status: labStatus,
+                notes: labNotes,
+                creationDate: creationDate
+            };
+
+            try {
+                if (editingId) {
+                    if (updateLab(parseInt(editingId), labData)) {
+                        showNotification('تم تحديث بيانات المختبر بنجاح', 'success');
+                        delete form.dataset.editingId;
+                        form.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> تحديث البيانات';
+                    } else {
+                        showNotification('حدث خطأ أثناء تحديث بيانات المختبر', 'danger');
+                    }
+                } else {
+                    addLab(labData);
+                    showNotification('تم إضافة مختبر جديد بنجاح', 'success');
+                }
+
+                form.reset();
+                displayLabs();
+                updateStats();
+                displayDeviceTypeStats(getLabs());
+                showSection('view-section');
+            } catch (error) {
+                console.error('Error handling form submission:', error);
+                showNotification('حدث خطأ أثناء حفظ البيانات', 'danger');
+            }
+        }
+
+        function handleLabsTableAction(event) {
+            try {
+                const target = event.target;
+                const labId = parseInt(target.dataset.id);
+
+                if (target.classList.contains('view-details-btn')) {
+                    const lab = getLabById(labId);
+                    if (lab) {
+                        exportLabDetailsToPdf(lab);
+                    } else {
+                        showNotification('لم يتم العثور على المختبر', 'danger');
+                    }
+                } else if (target.classList.contains('delete-btn')) {
+                    deleteLabById(labId);
+                } else if (target.classList.contains('dropdown-toggle')) {
+                    const dropdownMenu = target.nextElementSibling;
+                    if (dropdownMenu) {
+                        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+                    }
+                } else if (target.classList.contains('show-details-btn')) {
+                    const lab = getLabById(labId);
+                    if (lab) {
+                        showLabDetailsModal(lab.id);
+                    } else {
+                        showNotification('لم يتم العثور على المختبر', 'danger');
+                    }
+                }
+            } catch (error) {
+                console.error('Error handling labs table action:', error);
+                showNotification('حدث خطأ في إجراءات الجدول', 'danger');
+            }
+        }
+
+        function handleSearchResultsTableAction(event) {
+            try {
+                const target = event.target;
+                const labId = parseInt(target.dataset.id);
+
+                if (target.classList.contains('view-details-btn')) {
+                    const lab = getLabById(labId);
+                    if (lab) {
+                        exportLabDetailsToPdf(lab);
+                    } else {
+                        showNotification('لم يتم العثور على المختبر', 'danger');
+                    }
+                } else if (target.classList.contains('dropdown-toggle')) {
+                    const dropdownMenu = target.nextElementSibling;
+                    if (dropdownMenu) {
+                        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error handling search results table action:', error);
+                showNotification('حدث خطأ في إجراءات البحث', 'danger');
+            }
+        }
+
+        function showLabDetailsModal(id) {
+            try {
+                const lab = getLabById(id);
+                if (!lab) return;
+
+                labDetailsModalTitle.innerHTML = `<i class="fas fa-flask"></i> ${lab.name || 'غير محدد'}`;
+
+                if (modalLabGovernorate) modalLabGovernorate.value = lab.governorate || '';
+                if (modalDeviceType) {
+                    if (lab.device && !Array.from(modalDeviceType.options).map(option => option.value).includes(lab.device)) {
+                        modalDeviceType.value = 'أخرى (كتابة)';
+                        if (modalDeviceTypeOther) {
+                            modalDeviceTypeOther.style.display = 'block';
+                            modalDeviceTypeOther.value = lab.device;
+                        }
+                    } else {
+                        modalDeviceType.value = lab.device || '';
+                        if (modalDeviceTypeOther) {
+                            modalDeviceTypeOther.style.display = 'none';
+                            modalDeviceTypeOther.value = '';
+                        }
+                    }
+                }
+                if (modalDeviceCount) modalDeviceCount.value = lab.count || '';
+                if (modalLabPhone) modalLabPhone.value = lab.phone || '';
+                if (modalMaterialCost) modalMaterialCost.value = lab.materialCost || '';
+                if (modalTestsCount) modalTestsCount.value = lab.testsCount || '';
+                if (modalLabStatus) modalLabStatus.value = lab.status || 'active';
+                const statusElement = document.getElementById('modal-lab-current-status');
+                if (statusElement) {
+                    statusElement.textContent = getStatusText(lab.status);
+                    statusElement.className = `status-badge status-${lab.status}`;
+                    statusElement.style.display = 'inline-block';
+                }
+                if (modalCreationDate) modalCreationDate.value = lab.creationDate || '';
+                if (modalLabNotes) modalLabNotes.value = lab.notes || '';
+
+                if (saveLabDetailsBtn) saveLabDetailsBtn.dataset.labId = id;
+
+                labDetailsModalOverlay.style.display = 'flex';
+            } catch (error) {
+                console.error('Error viewing lab details:', error);
+                showNotification('حدث خطأ أثناء عرض تفاصيل المختبر', 'danger');
+            }
+        }
+
+        function hideLabDetailsModal() {
+            labDetailsModalOverlay.style.display = 'none';
+            currentLabIdForEdit = null;
+        }
+
+        function handleSaveLabDetails() {
+            const labId = parseInt(this.dataset.labId);
+
+            if (isNaN(labId)) {
+                showNotification('لم يتم تحديد مختبر لحفظ التعديلات', 'danger');
+                return;
+            }
+
+            const updatedData = {
+                governorate: modalLabGovernorate.value,
+                device: modalDeviceType.value === 'أخرى (كتابة)' ? modalDeviceTypeOther.value.trim() : modalDeviceType.value,
+                count: parseInt(modalDeviceCount.value),
+                phone: modalLabPhone.value,
+                materialCost: parseFloat(modalMaterialCost.value),
+                testsCount: parseInt(modalTestsCount.value),
+                status: modalLabStatus.value,
+                creationDate: modalCreationDate.value,
+                notes: modalLabNotes.value
+            };
+
+            if (!updatedData.governorate) {
+                showNotification('الرجاء اختيار المحافظة', 'danger');
+                return;
+            }
+            if (!updatedData.device) {
+                showNotification('الرجاء اختيار أو إدخال نوع الجهاز', 'danger');
+                return;
+            }
+            if (isNaN(updatedData.count) || updatedData.count < 0) {
+                showNotification('الرجاء إدخال عدد أجهزة صالح', 'danger');
+                return;
+            }
+            if (updatedData.phone && !/^0\d{9}$/.test(updatedData.phone)) {
+                showNotification('الرجاء إدخال رقم هاتف بتنسيق صحيح', 'danger');
+                return;
+            }
+            if (isNaN(updatedData.materialCost)) {
+                updatedData.materialCost = 0;
+            }
+            if (isNaN(updatedData.testsCount) || updatedData.testsCount < 0) {
+                updatedData.testsCount = 0;
+            }
+
+            try {
+                if (updateLab(labId, updatedData)) {
+                    showNotification('تم تحديث بيانات المختبر بنجاح', 'success');
+                    displayLabs();
+                    updateStats();
+                    displayDeviceTypeStats(getLabs());
+                    hideLabDetailsModal();
+                } else {
+                    showNotification('حدث خطأ أثناء تحديث بيانات المختبر', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving lab details:', error);
+                showNotification('حدث خطأ أثناء حفظ التعديلات', 'danger');
+            }
+        }
+
+        function searchLabs() {
+            try {
+                const query = document.getElementById('search-input').value.toLowerCase();
+                const resultsBody = document.getElementById('search-results');
+                const noResultsMessage = document.getElementById('no-results-message');
+                const labsData = getLabs();
+
+                const filteredLabs = labsData.filter(lab =>
+                    (lab.name && lab.name.toLowerCase().includes(query)) ||
+                    (lab.governorate && lab.governorate.toLowerCase().includes(query)) ||
+                    (lab.device && lab.device.toLowerCase().includes(query)) ||
+                    (lab.phone && lab.phone.includes(query)) ||
+                    (lab.status && getStatusText(lab.status).toLowerCase().includes(query))
+                );
+
+                resultsBody.innerHTML = '';
+
+                if (filteredLabs.length === 0) {
+                    noResultsMessage.style.display = 'block';
+                    return;
+                } else {
+                    noResultsMessage.style.display = 'none';
+                }
+
+                filteredLabs.forEach((lab, index) => {
+                    let row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="serial-column">${index + 1}</td>
+                        <td>${lab.name || 'غير محدد'}</td>
+                        <td>${lab.governorate || 'غير محدد'}</td>
+                        <td>${lab.device || 'غير محدد'}</td>
+                        <td>${lab.phone || 'غير متوفر'}</td>
+                        <td><span class="status-badge status-${lab.status}">${getStatusText(lab.status)}</span></td>
+                        <td>${formatDate(lab.creationDate) || 'غير محدد'}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-id="${lab.id}" aria-expanded="false">
+                                    <i class="fas fa-cog"></i> الإجراءات
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item view-details-btn" href="#" data-id="${lab.id}"><i class="fas fa-file-pdf"></i> تصدير</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    `;
+                    resultsBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error searching labs:', error);
+                showNotification('حدث خطأ أثناء البحث', 'danger');
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            try {
+                const notificationDiv = document.createElement('div');
+                notificationDiv.className = `notification ${type}`;
+                notificationDiv.textContent = message;
+                document.body.appendChild(notificationDiv);
+                setTimeout(() => document.body.removeChild(notificationDiv), 3000);
+            } catch (error) {
+                console.error('Error showing notification:', error);
+            }
+        }
+
+        function showLoading() {
+            try {
+                document.getElementById('loading-indicator').style.display = 'flex';
+            } catch (error) {
+                console.error('Error showing loading indicator:', error);
+            }
+        }
+
+        function hideLoading() {
+            try {
+                document.getElementById('loading-indicator').style.display = 'none';
+            } catch (error) {
+                console.error('Error hiding loading indicator:', error);
+            }
+        }
+
+        function deleteLabById(id) {
+            if (confirm('هل أنت متأكد أنك تريد حذف هذا المختبر؟')) {
+                deleteLab(id);
+                displayLabs();
+                updateStats();
+                displayDeviceTypeStats(getLabs());
+                showNotification('تم حذف المختبر بنجاح', 'success');
+            }
+        }
+    </script>
+</body>
+</html>
